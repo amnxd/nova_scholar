@@ -1,0 +1,37 @@
+# Node
+node_modules/
+.next/
+dist/
+out/
+build/
+.env
+.env.local
+.DS_Store
+coverage/
+.npm/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+*.spec
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebaserc
+
+# OS
+Thumbs.db
