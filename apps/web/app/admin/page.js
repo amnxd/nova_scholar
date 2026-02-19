@@ -1,11 +1,46 @@
 "use client";
 
-import { useState } from "react";
-import { Users, AlertCircle, HelpCircle, Send, TrendingUp, AlertTriangle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Users, AlertCircle, HelpCircle, Send, TrendingUp, AlertTriangle, BookOpen } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { useAuth } from "../../context/AuthContext";
 
 export default function AdminDashboardPage() {
     const [notificationSent, setNotificationSent] = useState(false);
+    const [stats, setStats] = useState([
+        { label: "Total Students", value: "...", icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
+        { label: "Avg Attendance", value: "...", icon: TrendingUp, color: "text-green-600", bg: "bg-green-100" },
+        { label: "Unsolved Doubts", value: "...", icon: HelpCircle, color: "text-orange-600", bg: "bg-orange-100" },
+    ]);
+    const { user } = useAuth(); // Assuming useAuth imported
+
+    useEffect(() => {
+        if (user) {
+            fetchStats();
+        }
+    }, [user]);
+
+    const fetchStats = async () => {
+        try {
+            const token = await user.getIdToken();
+            const res = await fetch("http://127.0.0.1:8000/admin/stats", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ token, teacher_id: user.uid })
+            });
+            const data = await res.json();
+            
+            if (data.total_students !== undefined) {
+                setStats([
+                    { label: "Total Students", value: data.total_students, icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
+                    { label: "Active Courses", value: data.active_courses, icon: BookOpen, color: "text-green-600", bg: "bg-green-100" },
+                    { label: "Unsolved Doubts", value: data.unsolved_doubts, icon: HelpCircle, color: "text-orange-600", bg: "bg-orange-100" },
+                ]);
+            }
+        } catch (error) {
+            console.error("Error fetching stats:", error);
+        }
+    };
 
     // --- Data ---
     const students = [
@@ -24,12 +59,6 @@ export default function AdminDashboardPage() {
         { name: 'SQL Joins', count: 24 },
         { name: 'REST APIs', count: 18 },
         { name: 'Graph Theory', count: 15 },
-    ];
-
-    const stats = [
-        { label: "Total Students", value: "1,240", icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
-        { label: "Avg Attendance", value: "78%", icon: TrendingUp, color: "text-green-600", bg: "bg-green-100" },
-        { label: "Unsolved Doubts", value: "142", icon: HelpCircle, color: "text-orange-600", bg: "bg-orange-100" },
     ];
 
     const handleBatchNotify = () => {
