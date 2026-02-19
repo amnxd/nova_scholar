@@ -17,6 +17,8 @@ const API_BASE = "http://127.0.0.1:8000";
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [userRole, setUserRole] = useState(null);
+    const [userUid, setUserUid] = useState(null);
+    const [profileName, setProfileName] = useState(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
     const skipAutoSyncRef = useRef(false);
@@ -38,6 +40,19 @@ export const AuthProvider = ({ children }) => {
             const data = await response.json();
             if (data.status === "success") {
                 setUserRole(data.role);
+                setUserUid(data.uid);
+                // Fetch profile name from Firestore via backend
+                try {
+                    const profileRes = await fetch(`${API_BASE}/student/profile?uid=${data.uid}`);
+                    if (profileRes.ok) {
+                        const profileData = await profileRes.json();
+                        if (profileData.name) {
+                            setProfileName(profileData.name);
+                        }
+                    }
+                } catch (profileErr) {
+                    console.warn("Could not fetch profile name:", profileErr);
+                }
                 return data.role;
             } else {
                 throw new Error(data.message || "Sync failed");
@@ -110,6 +125,8 @@ export const AuthProvider = ({ children }) => {
             await signOut(auth);
             setUser(null);
             setUserRole(null);
+            setUserUid(null);
+            setProfileName(null);
             router.push("/login");
         } catch (error) {
             console.error("Error signing out", error);
@@ -117,7 +134,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, userRole, setUserRole, loading, signUp, signIn, syncUserRole, logout }}>
+        <AuthContext.Provider value={{ user, userRole, userUid, profileName, setUserRole, loading, signUp, signIn, syncUserRole, logout }}>
             {children}
         </AuthContext.Provider>
     );

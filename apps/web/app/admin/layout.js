@@ -53,7 +53,7 @@ export default function AdminLayout({ children }) {
         <div className="flex items-center gap-2">
             <Shield size={20} className="text-red-600" />
             <span className="font-bold text-xl text-slate-800 dark:text-white">
-            Nova Admin
+            Manan Admin
             </span>
         </div>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800">
@@ -75,7 +75,7 @@ export default function AdminLayout({ children }) {
             </div>
             <div>
                 <h1 className="font-bold text-xl text-white tracking-tight">
-                Nova Scholar
+                Manan AI
                 </h1>
                 <span className="text-xs font-semibold bg-white/10 text-white/70 px-2 py-0.5 rounded ml-[-1px]">ADMIN MODE</span>
             </div>
@@ -155,7 +155,7 @@ export default function AdminLayout({ children }) {
 
         {/* Page Content */}
         <div className="flex-1 overflow-auto p-4 md:p-8">
-            <div className="max-w-7xl mx-auto">
+            <div className="w-full max-w-[1600px] mx-auto">
                 {children}
             </div>
         </div>

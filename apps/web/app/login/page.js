@@ -61,7 +61,7 @@ export default function LoginPage() {
         <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
             <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800">
                 <h1 className="mb-2 text-center text-3xl font-bold text-gray-900 dark:text-white">
-                    Nova Scholar
+                    Manan AI
                 </h1>
                 <p className="mb-8 text-center text-gray-500 dark:text-gray-400">
                     Sign in to your account

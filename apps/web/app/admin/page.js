@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
     <div className="space-y-8 animate-in fade-in zoom-in duration-300">
         
         {/* Section C: Quick Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {stats.map((stat, idx) => {
                 const Icon = stat.icon;
                 return (
@@ -89,7 +89,7 @@ export default function AdminDashboardPage() {
             })}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
             {/* Section A: The "At-Risk" Heatmap */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-lg overflow-hidden flex flex-col">
                 <div className="p-6 border-b border-gray-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">

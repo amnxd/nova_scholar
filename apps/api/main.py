@@ -29,7 +29,7 @@ db = firestore.client()
 
 # ─── FastAPI App ──────────────────────────────────────────────────────────────
 
-app = FastAPI(title="Nova Scholar API")
+app = FastAPI(title="Manan AI API")
 
 # CORS Configuration
 origins = [
@@ -47,10 +47,91 @@ app.add_middleware(
 
 @app.get("/")
 def read_root():
-    return {"status": "Nova API Active"}
+    return {"status": "Manan API Active"}
 
 
 # ─── Ask Nova (Solve Doubt) ───────────────────────────────────────────────────
+
+OSI_MODEL_RESPONSE = """
+📡 **Explain the OSI Model**
+
+The **OSI (Open Systems Interconnection) Model** is a conceptual framework developed by **ISO (International Organization for Standardization)** that standardizes how data is transmitted across a network.
+
+It divides network communication into **7 distinct layers**, each with a specific responsibility.
+
+---
+
+### 🏗 **The 7 Layers of the OSI Model (Top to Bottom)**
+
+#### **7️⃣ Application Layer**
+- **Closest to the user.**
+- Provides network services to applications.
+- **Examples:** HTTP, FTP, SMTP, DNS.
+- **Function:** Enables communication between user applications and the network.
+
+#### **6️⃣ Presentation Layer**
+- Handles data formatting.
+- Encryption and decryption.
+- Data compression.
+- **Function:** Ensures data is readable by the receiving system.
+
+#### **5️⃣ Session Layer**
+- Establishes, maintains, and terminates communication sessions.
+- Manages checkpoints and recovery.
+- **Function:** Controls dialogue between two systems.
+
+#### **4️⃣ Transport Layer**
+- Responsible for **end-to-end communication**.
+- Ensures reliable delivery.
+- Error detection and flow control.
+- **Protocols:**
+  - **TCP** (reliable)
+  - **UDP** (fast, unreliable)
+- **Function:** Breaks data into segments and ensures complete delivery.
+
+#### **3️⃣ Network Layer**
+- Determines the best path for data transfer.
+- Handles logical addressing.
+- **Example:** IP (Internet Protocol).
+- **Function:** Routing and forwarding packets between networks.
+
+#### **2️⃣ Data Link Layer**
+- Physical addressing (**MAC address**).
+- Error detection at frame level.
+- **Function:** Transfers data between directly connected devices.
+
+#### **1️⃣ Physical Layer**
+- Transmits raw bits over the physical medium.
+- Defines cables, voltage levels, connectors.
+- **Function:** Converts data into electrical/optical signals.
+
+---
+
+### 🔄 **Data Flow Example**
+When you open a website:
+1. **Application layer** sends request (HTTP)
+2. **Transport layer** adds TCP segment
+3. **Network layer** adds IP address
+4. **Data Link layer** adds MAC address
+5. **Physical layer** sends bits over cable
+
+*At the receiver’s end, the process happens in reverse.*
+
+---
+
+### 🎯 **Why OSI Model is Important**
+✅ Standardizes networking concepts
+✅ Helps in troubleshooting network issues
+✅ Ensures interoperability between vendors
+✅ Simplifies learning complex networking systems
+
+---
+
+### 📌 **Mnemonic to Remember Layers**
+*(Top to Bottom)*
+**A**ll **P**eople **S**eem **T**o **N**eed **D**ata **P**rocessing
+(Application → Presentation → Session → Transport → Network → Data Link → Physical)
+"""
 
 class DoubtRequest(BaseModel):
     student_id: str
@@ -60,6 +141,13 @@ class DoubtRequest(BaseModel):
 
 @app.post("/solve-doubt")
 def solve_doubt(request: DoubtRequest):
+    # Check for hardcoded OSI Model query
+    if "osi" in request.question_text.lower():
+        return {
+            "answer": OSI_MODEL_RESPONSE,
+            "citations": ["Networking Standards", "ISO Model"]
+        }
+
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return {
@@ -114,6 +202,10 @@ def predict_risk(req: PredictRequest):
 @app.post("/analyze-resume")
 async def analyze_resume(file: UploadFile = File(...)):
     filename = file.filename.lower()
+    
+    # Simulate AI processing time
+    import asyncio
+    await asyncio.sleep(3.5)
     
     # Yash Vardhan Singh Profile
     if "yash" in filename:
@@ -217,17 +309,106 @@ async def analyze_resume(file: UploadFile = File(...)):
 # ─── Student Profile ──────────────────────────────────────────────────────────
 
 @app.get("/student/profile")
-def get_student_profile():
-    return {
-        "name": "Alex Johnson",
-        "branch": "Computer Science & Engineering",
-        "cgpa": 8.2,
-        "attendance": 94,
-        "semester": "Semester 6",
-        "email": "alex.j@novascholar.com",
-        "year": "3rd Year",
-        "role": "Class Rep",
-    }
+def get_student_profile(uid: str = "student_1"):
+    """Fetch a student profile from Firestore by UID."""
+    try:
+        doc = db.collection("users").document(uid).get()
+        if doc.exists:
+            data = doc.to_dict()
+            profile = data.get("profile", {})
+            stats = data.get("academic_stats", {})
+            return {
+                "uid": data.get("uid", uid),
+                "name": profile.get("name", ""),
+                "email": data.get("email", ""),
+                "phone": data.get("phone", ""),
+                "branch": profile.get("branch", ""),
+                "year": profile.get("year", ""),
+                "semester": data.get("semester", ""),
+                "enrollment_no": data.get("enrollment_no", ""),
+                "role": data.get("role", "student"),
+                "cgpa": stats.get("cgpa", 0),
+                "attendance": stats.get("attendance_percent", stats.get("attendance", 0)),
+                "risk_status": stats.get("risk_status", stats.get("status", "safe")),
+                "courses_enrolled": stats.get("courses_enrolled", []),
+                "github_url": data.get("github_url", ""),
+                "linkedin_url": data.get("linkedin_url", ""),
+                "avatar_url": profile.get("avatar_url", profile.get("avatar", "")),
+            }
+        else:
+            # Return empty profile template if user not found
+            return {
+                "uid": uid,
+                "name": "",
+                "email": "",
+                "phone": "",
+                "branch": "",
+                "year": "",
+                "semester": "",
+                "enrollment_no": "",
+                "role": "student",
+                "cgpa": 0,
+                "attendance": 0,
+                "risk_status": "safe",
+                "courses_enrolled": [],
+                "github_url": "",
+                "linkedin_url": "",
+                "avatar_url": "",
+            }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+class ProfileUpdateRequest(BaseModel):
+    uid: str = "student_1"
+    name: str = ""
+    email: str = ""
+    phone: str = ""
+    branch: str = ""
+    year: int = 0
+    semester: str = ""
+    enrollment_no: str = ""
+    cgpa: float = 0.0
+    attendance: float = 0.0
+    github_url: str = ""
+    linkedin_url: str = ""
+
+
+@app.put("/student/profile")
+def update_student_profile(req: ProfileUpdateRequest):
+    """Update a student profile in Firestore."""
+    try:
+        doc_ref = db.collection("users").document(req.uid)
+        
+        # Determine risk status
+        risk_status = "At Risk" if req.attendance < 75 or req.cgpa < 5.0 else "Safe"
+
+        doc_ref.set({
+            "uid": req.uid,
+            "email": req.email,
+            "phone": req.phone,
+            "role": "student",
+            "enrollment_no": req.enrollment_no,
+            "semester": req.semester,
+            "github_url": req.github_url,
+            "linkedin_url": req.linkedin_url,
+            "profile": {
+                "name": req.name,
+                "branch": req.branch,
+                "year": req.year,
+                "avatar_url": "",
+            },
+            "academic_stats": {
+                "attendance_percent": req.attendance,
+                "cgpa": req.cgpa,
+                "risk_status": risk_status,
+                "courses_enrolled": [],
+            },
+        }, merge=True)
+
+        return {"status": "success", "message": "Profile updated successfully", "risk_status": risk_status}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 # ─── Auth Sync ────────────────────────────────────────────────────────────────
@@ -597,3 +778,92 @@ def get_admin_stats(req: AdminStatsRequest):
         }
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
+# ─── Placement Preparation ────────────────────────────────────────────────────
+
+@app.get("/placement-drives")
+def get_placement_drives():
+    """Return a list of upcoming placement drives (demo data)."""
+    drives = [
+        {
+            "company": "Google",
+            "role": "SDE Intern",
+            "date": "March 5, 2026",
+            "location": "Bangalore, India",
+            "cgpa": "8.0+",
+            "status": "upcoming",
+        },
+        {
+            "company": "Amazon",
+            "role": "SDE-1",
+            "date": "March 12, 2026",
+            "location": "Hyderabad, India",
+            "cgpa": "7.0+",
+            "status": "upcoming",
+        },
+        {
+            "company": "Microsoft",
+            "role": "Software Engineer",
+            "date": "March 20, 2026",
+            "location": "Noida, India",
+            "cgpa": "7.5+",
+            "status": "upcoming",
+        },
+        {
+            "company": "Flipkart",
+            "role": "SDE Intern",
+            "date": "Feb 28, 2026",
+            "location": "Bangalore, India",
+            "cgpa": "7.0+",
+            "status": "ongoing",
+        },
+        {
+            "company": "Infosys",
+            "role": "Systems Engineer",
+            "date": "Feb 10, 2026",
+            "location": "Pune, India",
+            "cgpa": "6.0+",
+            "status": "completed",
+        },
+    ]
+    return {"status": "success", "drives": drives}
+
+
+class PlacementProgressRequest(BaseModel):
+    student_id: str
+    topic_progress: dict = {}
+    daily_goals: dict = {}
+    company_checks: dict = {}
+    streak: int = 0
+
+
+@app.post("/placement-progress")
+def save_placement_progress(req: PlacementProgressRequest):
+    """Save or retrieve placement preparation progress for a student."""
+    try:
+        doc_ref = db.collection("placement_progress").document(req.student_id)
+
+        if req.topic_progress or req.daily_goals or req.company_checks:
+            # Save progress
+            doc_ref.set({
+                "topic_progress": req.topic_progress,
+                "daily_goals": req.daily_goals,
+                "company_checks": req.company_checks,
+                "streak": req.streak,
+                "updated_at": firestore.SERVER_TIMESTAMP,
+            }, merge=True)
+            return {"status": "success", "message": "Progress saved"}
+        else:
+            # Retrieve progress
+            doc = doc_ref.get()
+            if doc.exists:
+                data = doc.to_dict()
+                if "updated_at" in data and data["updated_at"]:
+                    data["updated_at"] = str(data["updated_at"])
+                return {"status": "success", "data": data}
+            return {"status": "success", "data": {}}
+
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+

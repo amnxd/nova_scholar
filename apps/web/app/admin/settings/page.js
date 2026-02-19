@@ -15,7 +15,7 @@ export default function AdminSettingsPage() {
             <Settings className="text-red-600" />
             System Configuration
         </h1>
-        <p className="text-gray-500 dark:text-gray-400 mb-8 ml-9">Manage global settings for the Nova Scholar platform.</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-8 ml-9">Manage global settings for the Manan AI platform.</p>
 
         {/* Section 1: System Controls */}
         <div className="space-y-6">
@@ -40,7 +40,7 @@ export default function AdminSettingsPage() {
             <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-slate-800/50 rounded-xl border border-gray-100 dark:border-slate-800">
                 <div className="flex-1">
                     <h3 className="font-medium text-gray-900 dark:text-white">Exam Mode</h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">Disable "Ask Nova" doubt solver and social features during exam hours.</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">Disable "Ask Manan" doubt solver and social features during exam hours.</p>
                 </div>
                 <button 
                     onClick={() => setExamMode(!examMode)}

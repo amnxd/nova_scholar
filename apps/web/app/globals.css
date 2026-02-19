@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+@theme {
+    --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+    --font-heading: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
+    --radius-xs: 0px;
+    --radius-sm: 0px;
+    --radius-md: 0px;
+    --radius-lg: 0px;
+    --radius-xl: 0px;
+    --radius-2xl: 0px;
+    --radius-3xl: 0px;
+    --radius-full: 9999px;
+    /* Keep full for avatars/pills if needed, or set to 0px if we want SQUARE avatars */
+
+    /* Force override for standard tailwind radius spacing variables if they exist in v4 default theme */
+    --spacing-radius-sm: 0px;
+    --spacing-radius-md: 0px;
+    --spacing-radius-lg: 0px;
+    --spacing-radius-xl: 0px;
+}
+
+@layer base {
+    body {
+        @apply bg-white text-zinc-950 antialiased;
+    }
+
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        @apply font-heading font-medium tracking-tight;
+    }
+}
+
+@layer utilities {
+    .glass-panel {
+        @apply bg-white/80 backdrop-blur-md border border-zinc-200 shadow-sm;
+    }
+
+    .aesthetic-button {
+        @apply px-4 py-2 bg-zinc-900 text-white font-medium hover:bg-zinc-800 transition-colors uppercase tracking-wide text-xs border border-transparent hover:border-zinc-900;
+    }
+}

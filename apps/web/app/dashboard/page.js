@@ -1,14 +1,14 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { TrendingUp, AlertTriangle, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { TrendingUp, AlertTriangle, CheckCircle, Clock, Loader2, ArrowRight } from "lucide-react";
 
 const API_BASE = "http://127.0.0.1:8000";
 
 export default function DashboardPage() {
     // --- Widget A: Academic Predictor State ---
     const [attendance, setAttendance] = useState(85);
-    const [marks, setMarks] = useState(80);
+    const [cgpa, setCgpa] = useState(8.0);
     const [prediction, setPrediction] = useState({ risk_level: "Low", predicted_cgpa: 8.2 });
     const [isPredicting, setIsPredicting] = useState(false);
     const debounceRef = useRef(null);
@@ -22,7 +22,7 @@ export default function DashboardPage() {
                 const res = await fetch(`${API_BASE}/predict`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ attendance, marks }),
+                    body: JSON.stringify({ attendance, marks: cgpa * 10 }),
                 });
                 if (res.ok) {
                     const data = await res.json();
@@ -35,14 +35,14 @@ export default function DashboardPage() {
             }
         }, 500);
         return () => clearTimeout(debounceRef.current);
-    }, [attendance, marks]);
+    }, [attendance, cgpa]);
 
     // Derive risk display from API response
     const getRiskDisplay = () => {
         const level = prediction?.risk_level ?? "Low";
-        if (level === "High") return { level: "High", color: "text-red-500", bg: "bg-red-500", badgeBg: "bg-red-50 border-red-200" };
-        if (level === "Medium") return { level: "Medium", color: "text-yellow-500", bg: "bg-yellow-500", badgeBg: "bg-yellow-50 border-yellow-200" };
-        return { level: "Low", color: "text-green-500", bg: "bg-green-500", badgeBg: "bg-green-50 border-green-200" };
+        if (level === "High") return { level: "High", color: "text-red-600", bg: "bg-red-600", border: "border-red-600" };
+        if (level === "Medium") return { level: "Medium", color: "text-amber-600", bg: "bg-amber-600", border: "border-amber-600" };
+        return { level: "Low", color: "text-emerald-600", bg: "bg-emerald-600", border: "border-emerald-600" };
     };
 
     const risk = getRiskDisplay();
@@ -58,178 +58,164 @@ export default function DashboardPage() {
 
     const getIcon = (type) => {
         switch (type) {
-            case 'urgent': return <AlertTriangle size={18} className="text-red-500" />;
-            case 'success': return <CheckCircle size={18} className="text-green-500" />;
-            case 'warning': return <Clock size={18} className="text-yellow-500" />;
-            default: return <TrendingUp size={18} className="text-blue-500" />;
+            case 'urgent': return <AlertTriangle size={16} className="text-zinc-900" />;
+            case 'success': return <CheckCircle size={16} className="text-zinc-900" />;
+            case 'warning': return <Clock size={16} className="text-zinc-900" />;
+            default: return <TrendingUp size={16} className="text-zinc-900" />;
         }
     };
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-6">
 
             {/* Widget A: Academic Predictor/Simulator */}
-            <div className="md:col-span-2 lg:col-span-2 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 transition-all hover:shadow-2xl">
-                <div className="flex items-center justify-between mb-6">
+            <div className="md:col-span-2 lg:col-span-2 bg-white border border-zinc-200 p-6 shadow-sm hover:border-zinc-900 transition-colors">
+                <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                            <TrendingUp className="text-blue-600" />
+                        <h3 className="text-xl font-heading font-bold text-zinc-900 flex items-center gap-2 uppercase tracking-tight">
+                            <TrendingUp className="text-zinc-900" />
                             Academic Risk Simulator
                         </h3>
-                        <p className="text-gray-500 text-sm mt-1">Adjust sliders to see how your performance affects your academic risk.</p>
+                        <p className="text-zinc-500 text-sm mt-1 font-medium">Analyze perfromance metrics</p>
                     </div>
 
                     {/* Risk Badge */}
-                    <div className={`px-4 py-2 rounded-full border ${risk.badgeBg} flex items-center gap-2 transition-all duration-300`}>
+                    <div className={`px-4 py-1 border ${risk.border} flex items-center gap-3 bg-white`}>
                         {isPredicting ? (
-                            <Loader2 size={14} className="animate-spin text-gray-500" />
+                            <Loader2 size={14} className="animate-spin text-zinc-900" />
                         ) : (
-                            <span className={`w-3 h-3 rounded-full ${risk.bg} animate-pulse`}></span>
+                            <span className={`w-2 h-2 ${risk.bg}`}></span>
                         )}
-                        <span className={`font-bold ${risk.color}`}>Risk: {risk.level}</span>
+                        <span className={`font-bold font-mono text-sm uppercase ${risk.color}`}>Risk: {risk.level}</span>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
                     {/* Controls */}
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         <div>
-                            <div className="flex justify-between mb-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Attendance</label>
-                                <span className="text-sm font-bold text-blue-600">{attendance}%</span>
+                            <div className="flex justify-between items-end mb-2">
+                                <label className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Attendance (%)</label>
+                                <span className="text-xl font-heading font-bold text-zinc-900">{attendance}%</span>
                             </div>
                             <input
                                 type="range"
                                 min="0"
                                 max="100"
+                                step="1"
                                 value={attendance}
-                                onChange={(e) => setAttendance(Number(e.target.value))}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                onChange={(e) => setAttendance(Math.min(100, Math.max(0, Number(e.target.value))))}
+                                className="w-full h-1 bg-zinc-200 appearance-none cursor-pointer accent-zinc-900"
                             />
-                            <div className="flex justify-between text-xs text-gray-400 mt-1">
-                                <span>Danger (&lt;75%)</span>
-                                <span>Good (&gt;85%)</span>
-                            </div>
+                            <p className="text-[10px] uppercase font-bold text-zinc-400 mt-2 tracking-widest">{attendance < 75 ? "⚠️ AT RISK" : "✓ SAFE ZONE"}</p>
                         </div>
 
                         <div>
-                            <div className="flex justify-between mb-2">
-                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Average Marks</label>
-                                <span className="text-sm font-bold text-indigo-600">{marks}%</span>
+                            <div className="flex justify-between items-end mb-2">
+                                <label className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Average CGPA</label>
+                                <span className="text-xl font-heading font-bold text-zinc-900">{cgpa}</span>
                             </div>
                             <input
                                 type="range"
                                 min="0"
-                                max="100"
-                                value={marks}
-                                onChange={(e) => setMarks(Number(e.target.value))}
-                                className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                max="10"
+                                step="0.1"
+                                value={cgpa}
+                                onChange={(e) => setCgpa(Math.min(10, Math.max(0, Number(e.target.value))))}
+                                className="w-full h-1 bg-zinc-200 appearance-none cursor-pointer accent-zinc-900"
                             />
+                            <p className="text-[10px] uppercase font-bold text-zinc-400 mt-2 tracking-widest">Target: 10.0</p>
                         </div>
 
                         {/* Predicted CGPA display */}
-                        <div className={`p-4 rounded-2xl border transition-all duration-300 ${risk.badgeBg}`}>
-                            <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1">Predicted CGPA</p>
-                            <div className="flex items-center gap-2">
+                        <div className="p-4 border border-zinc-900 bg-zinc-50">
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-1">AI Projection</p>
+                            <div className="flex items-baseline gap-2">
                                 {isPredicting ? (
-                                    <Loader2 size={20} className="animate-spin text-gray-400" />
+                                    <Loader2 size={20} className="animate-spin text-zinc-400" />
                                 ) : (
-                                    <span className={`text-3xl font-bold ${risk.color}`}>{predictedCgpa}</span>
+                                    <span className="text-4xl font-heading font-bold text-zinc-900">{predictedCgpa}</span>
                                 )}
-                                <span className="text-gray-400 text-sm">/ 10.0</span>
+                                <span className="text-zinc-400 text-sm font-medium">/ 10.0</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Visual Gauge */}
                     <div className="flex flex-col items-center justify-center p-4">
-                        <div className="relative w-40 h-40">
+                        <div className="relative w-48 h-48">
                             <svg className="w-full h-full" viewBox="0 0 100 100">
                                 {/* Background circle */}
-                                <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" strokeWidth="10" className="text-gray-100 dark:text-slate-800" />
+                                <circle cx="50" cy="50" r="45" fill="none" stroke="#e4e4e7" strokeWidth="2" />
                                 {/* Attendance arc */}
                                 <circle
                                     cx="50" cy="50" r="45" fill="none"
-                                    stroke="currentColor" strokeWidth="10"
+                                    stroke="#18181b" strokeWidth="2"
                                     strokeDasharray="283"
                                     strokeDashoffset={283 - (283 * attendance) / 100}
-                                    className="text-blue-500 transition-all duration-500 ease-out"
+                                    className="transition-all duration-500 ease-out"
                                     transform="rotate(-90 50 50)"
-                                    strokeLinecap="round"
+                                    strokeLinecap="square"
                                 />
-                                {/* Marks arc (inner) */}
+                                {/* CGPA arc (inner) */}
                                 <circle
                                     cx="50" cy="50" r="35" fill="none"
-                                    stroke="currentColor" strokeWidth="10"
+                                    stroke="#71717a" strokeWidth="2"
                                     strokeDasharray="220"
-                                    strokeDashoffset={220 - (220 * marks) / 100}
-                                    className="text-indigo-500 transition-all duration-500 ease-out opacity-80"
+                                    strokeDashoffset={220 - (220 * cgpa) / 10}
+                                    className="transition-all duration-500 ease-out"
                                     transform="rotate(-90 50 50)"
-                                    strokeLinecap="round"
+                                    strokeLinecap="square"
                                 />
                             </svg>
                             <div className="absolute inset-0 flex items-center justify-center flex-col">
                                 {isPredicting ? (
-                                    <Loader2 size={24} className="animate-spin text-gray-400" />
+                                    <Loader2 size={24} className="animate-spin text-zinc-400" />
                                 ) : (
                                     <>
-                                        <span className={`text-2xl font-bold ${risk.color}`}>{predictedCgpa}</span>
-                                        <span className="text-xs text-gray-500">CGPA</span>
+                                        <span className="text-3xl font-heading font-bold text-zinc-900">{predictedCgpa}</span>
+                                        <span className="text-[10px] uppercase tracking-widest text-zinc-500">CGPA</span>
                                     </>
                                 )}
                             </div>
                         </div>
-                        <p className="text-xs text-gray-400 mt-3 text-center">Live prediction from AI model</p>
+                        <p className="text-[10px] uppercase tracking-widest text-zinc-400 mt-4 text-center">Live Analysis</p>
                     </div>
                 </div>
             </div>
 
             {/* Widget B: Recent Activity */}
-            <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-800 rounded-3xl p-6 shadow-xl shadow-slate-200/50 dark:shadow-slate-900/50 flex flex-col">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Clock className="text-indigo-600" size={20} />
+            <div className="bg-white border border-zinc-200 p-6 shadow-sm hover:border-zinc-900 transition-colors flex flex-col">
+                <h3 className="text-lg font-heading font-bold text-zinc-900 mb-6 flex items-center gap-2 uppercase tracking-tight">
+                    <Clock className="text-zinc-900" size={18} />
                     Recent Activity
                 </h3>
 
-                <div className="flex-1 space-y-4 overflow-y-auto pr-2 custom-scrollbar">
+                <div className="flex-1 space-y-0 overflow-y-auto custom-scrollbar border-l border-zinc-100 ml-2 pl-6 relative">
                     {notifications.map((note) => (
-                        <div key={note.id} className="group flex items-start gap-3 p-3 rounded-2xl hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-gray-100 dark:hover:border-slate-700 transition-all">
-                            <div className={`mt-1 p-2 rounded-full ${note.type === 'urgent' ? 'bg-red-100' :
-                                note.type === 'success' ? 'bg-green-100' :
-                                    note.type === 'warning' ? 'bg-yellow-100' : 'bg-blue-100'
-                                }`}>
-                                {getIcon(note.type)}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-blue-600 transition-colors">
+                        <div key={note.id} className="group relative pb-8 last:pb-0">
+                            <span className="absolute -left-[29px] top-1 w-2 h-2 bg-zinc-200 border border-white group-hover:bg-zinc-900 transition-colors"></span>
+                            <div className="flex flex-col gap-1">
+                                <div className="flex items-center gap-2">
+                                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400">{note.time}</span>
+                                     <span className={`text-[10px] px-1.5 py-0.5 border ${note.type === 'urgent' ? 'border-red-200 text-red-600 bg-red-50' : 'border-zinc-200 text-zinc-500 bg-zinc-50'}`}>
+                                        {note.type.toUpperCase()}
+                                     </span>
+                                </div>
+                                <p className="text-sm font-medium text-zinc-900 group-hover:underline decoration-zinc-900 underline-offset-4 transition-all">
                                     {note.text}
                                 </p>
-                                <p className="text-xs text-gray-400 mt-1">{note.time}</p>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                <button className="mt-4 w-full py-2 text-sm text-gray-500 hover:text-blue-600 dark:text-gray-400 font-medium transition-colors text-center border-t border-gray-100 dark:border-slate-800 pt-3">
+                <button className="mt-8 w-full py-3 text-xs text-zinc-600 hover:text-white hover:bg-zinc-900 border border-zinc-200 hover:border-zinc-900 font-bold uppercase tracking-widest transition-colors text-center">
                     View All Notifications
                 </button>
             </div>
 
-            {/* Widget C: Career CTA */}
-            <div className="md:col-span-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl p-8 text-white shadow-lg relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-white opacity-10 rounded-full blur-3xl"></div>
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-                    <div>
-                        <h3 className="text-2xl font-bold mb-2">Unlock Your Career Potential</h3>
-                        <p className="text-indigo-100 max-w-xl">
-                            Nova's AI Career Agent can help you find internships and jobs tailored to your skills and academic performance.
-                        </p>
-                    </div>
-                    <button className="px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-gray-50 transition-all transform hover:-translate-y-1">
-                        Launch Career Agent
-                    </button>
-                </div>
-            </div>
+            {/* Widget C: Career CTA — REMOVED */}
 
         </div>
     );
