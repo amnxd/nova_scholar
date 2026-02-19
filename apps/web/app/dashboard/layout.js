@@ -13,24 +13,6 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.push("/login");
-    }
-  }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 from-blue-50 to-indigo-50 bg-gradient-to-br">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect via useEffect
-  }
-
   const navItems = [
     { name: "Overview", href: "/dashboard", icon: LayoutDashboard },
     { name: "My Courses", href: "/dashboard/courses", icon: BookOpen },
@@ -95,14 +77,14 @@ export default function DashboardLayout({ children }) {
           <div className="mt-auto pt-6 border-t border-gray-200 dark:border-slate-800">
             <div className="flex items-center gap-3 mb-4 px-2">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-md">
-                    {user.email ? user.email[0].toUpperCase() : "U"}
+                {user?.email ? user.email[0].toUpperCase() : "U"}
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate text-gray-900 dark:text-white">
-                        {user.displayName || "Student"}
+                  {user?.displayName || "Student"}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {user.email}
+                  {user?.email || "guest@novascholar.com"}
                     </p>
                 </div>
             </div>

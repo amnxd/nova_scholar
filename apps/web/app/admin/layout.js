@@ -7,7 +7,7 @@ import Link from "next/link";
 import { LayoutDashboard, Users, BookOpen, Settings, LogOut, Menu, X, Bell, Shield } from "lucide-react";
 
 export default function AdminLayout({ children }) {
-  const { user, loading, logout } = useAuth();
+  const { user, userRole, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -16,8 +16,11 @@ export default function AdminLayout({ children }) {
     if (!loading && !user) {
       router.push("/login");
     }
-    // In a real app, we'd check for admin role here
-  }, [user, loading, router]);
+    // Enforce admin role — redirect students to their dashboard
+    if (!loading && user && userRole && userRole !== "admin") {
+      router.replace("/dashboard");
+    }
+  }, [user, userRole, loading, router]);
 
   if (loading) {
     return (
@@ -27,7 +30,7 @@ export default function AdminLayout({ children }) {
     );
   }
 
-  if (!user) {
+  if (!user || (userRole && userRole !== "admin")) {
     return null;
   }
 
@@ -104,14 +107,14 @@ export default function AdminLayout({ children }) {
           <div className="mt-auto pt-6 border-t border-slate-800">
             <div className="flex items-center gap-3 mb-4 px-2">
                 <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white font-bold border border-slate-700">
-                    A
+                {user.email ? user.email[0].toUpperCase() : "A"}
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold truncate text-white">
-                        Admin User
+                  {user.displayName || "Admin"}
                     </p>
                     <p className="text-xs text-slate-500 truncate">
-                        admin@novascholar.com
+                  {user.email}
                     </p>
                 </div>
             </div>

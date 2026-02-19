@@ -32,6 +32,8 @@ env/
 .firebase/
 firebase-debug.log
 firebaserc
+*-firebase-adminsdk-*.json
+service-account.json
 
 # OS
 Thumbs.db

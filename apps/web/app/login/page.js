@@ -1,172 +1,134 @@
 "use client";
 
 import { useAuth } from "../../context/AuthContext";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function LoginPage() {
-    const { user, googleSignIn, loading, setUserRole } = useAuth();
+    const { user, userRole, signIn, loading } = useAuth();
     const router = useRouter();
-    const [selectedRole, setSelectedRole] = useState("student");
-    const [isSyncing, setIsSyncing] = useState(false);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [errorMsg, setErrorMsg] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Taking control of redirection away from AuthContext or useEffect hooks to ensure we sync first
-    // access tokens might be needed.
+    // If already logged in, redirect
+    useEffect(() => {
+        if (!loading && user && userRole) {
+            router.replace(userRole === "admin" ? "/admin" : "/dashboard");
+        }
+    }, [user, userRole, loading, router]);
 
-    const handleSignIn = async () => {
-        if (isSyncing) return; // guard against double-clicks
+    const handleLogin = async (e) => {
+        e.preventDefault();
         setErrorMsg("");
-        setIsSyncing(true);
+        setIsSubmitting(true);
+
         try {
-            await googleSignIn();
-            // After googleSignIn resolves, onAuthStateChanged fires and updates `user`.
-            // The useEffect below picks that up and handles the /auth/sync call + redirect.
-        } catch (error) {
-            // Silently ignore if a previous popup was cancelled (user opened a new one)
-            if (error?.code === "auth/cancelled-popup-request") {
-                setIsSyncing(false);
-                return;
+            const { role } = await signIn(email, password);
+            if (role === "admin") {
+                router.push("/admin");
+            } else if (role) {
+                router.push("/dashboard");
+            } else {
+                setErrorMsg("Logged in but could not sync with server. Please try again.");
             }
-            console.error(error);
-            setErrorMsg("Login failed. Please try again.");
-            setIsSyncing(false);
+        } catch (error) {
+            if (error?.code === "auth/user-not-found" || error?.code === "auth/wrong-password" || error?.code === "auth/invalid-credential") {
+                setErrorMsg("Invalid email or password.");
+            } else if (error?.code === "auth/invalid-email") {
+                setErrorMsg("Please enter a valid email address.");
+            } else if (error?.code === "auth/too-many-requests") {
+                setErrorMsg("Too many failed attempts. Please try again later.");
+            } else {
+                setErrorMsg(error?.message || "Login failed. Please try again.");
+            }
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
-    // We need to change AuthContext to return the result of signInWithPopup.
-    // However, I can't change AuthContext *logic* too much without risking breaking other things if dependent.
-    // But `googleSignIn` returning the promise result is standard.
-
-    // Alternative: Watch `user` in `useEffect`. 
-    // If `user` becomes available AND we are on this page...
-    // But we need to know if we just logged in to trigger sync.
-    // If user is already logged in (persistence), we might still want to check role or redirect.
-
-    // Let's use the `useEffect` that listens to `user`.
-    useEffect(() => {
-        const syncUser = async () => {
-            if (user && !isSyncing) {
-                // Only sync if we haven't already or if we aren't in the middle of it?
-                // Problem: `useEffect` runs on mount. If user is already logged in, `user` is non-null.
-                // We should sync to get the role.
-
-                setIsSyncing(true);
-                try {
-                    const token = await user.getIdToken();
-
-                    const response = await fetch("http://127.0.0.1:8000/auth/sync", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            token: token,
-                            role: selectedRole,
-                        }),
-                    });
-
-                    if (!response.ok) {
-                        throw new Error("Failed to sync user with backend");
-                    }
-
-                    const data = await response.json();
-
-                    // Update role in context
-                    if (setUserRole) setUserRole(data.role);
-
-                    // Redirect
-                    if (data.role === "admin") {
-                        router.push("/admin");
-                    } else {
-                        router.push("/dashboard");
-                    }
-                } catch (err) {
-                    console.error("Sync error:", err);
-                    setErrorMsg("Failed to synchronize user data. Backend might be down.");
-                    // Optionally logout if sync fails?
-                } finally {
-                    setIsSyncing(false);
-                }
-            }
-        };
-
-        syncUser();
-    }, [user, router]); // Dependency on `selectedRole` is tricky. if user changes role *after* login? No, role selection is pre-login.
-
-    // Issue: If `user` is already present (re-visit page), `selectedRole` defaults to "student". 
-    // If they were actually an admin, the backend will correct it (logic: "If Existing User: Read the existing role").
-    // So `selectedRole` is only relevant for NEW users. Perfect.
-
-    if (loading || isSyncing) {
+    if (loading || (user && userRole)) {
         return (
             <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        {isSyncing ? "Syncing profile..." : "Loading..."}
-                    </p>
-                </div>
+                <div className="h-16 w-16 animate-spin rounded-full border-4 border-blue-500 border-t-transparent"></div>
             </div>
         );
     }
 
     return (
-        <div className="flex h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
-            <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
-                <h1 className="mb-6 text-center text-3xl font-bold text-gray-900 dark:text-white">
+        <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
+            <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl dark:bg-gray-800">
+                <h1 className="mb-2 text-center text-3xl font-bold text-gray-900 dark:text-white">
                     Nova Scholar
                 </h1>
-                <p className="mb-8 text-center text-gray-600 dark:text-gray-400">
-                    Select your role to continue
+                <p className="mb-8 text-center text-gray-500 dark:text-gray-400">
+                    Sign in to your account
                 </p>
 
                 {errorMsg && (
-                    <div className="mb-4 rounded bg-red-100 p-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                    <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-400 border border-red-200 dark:border-red-800">
                         {errorMsg}
                     </div>
                 )}
 
-                <div className="mb-8 grid grid-cols-2 gap-4">
-                    <button
-                        onClick={() => setSelectedRole("student")}
-                        className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all ${selectedRole === "student"
-                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                : "border-gray-200 hover:border-blue-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                            }`}
-                    >
-                        <span className="text-2xl mb-2">🎓</span>
-                        <span className={`font-medium ${selectedRole === "student" ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}`}>
-                            Student
-                        </span>
-                    </button>
+                <form onSubmit={handleLogin} className="space-y-5">
+                    {/* Email */}
+                    <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Email
+                        </label>
+                        <input
+                            id="email"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="you@example.com"
+                            required
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+                        />
+                    </div>
 
-                    <button
-                        onClick={() => setSelectedRole("admin")}
-                        className={`flex flex-col items-center justify-center rounded-xl border-2 p-4 transition-all ${selectedRole === "admin"
-                                ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                : "border-gray-200 hover:border-blue-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-                            }`}
-                    >
-                        <span className="text-2xl mb-2">👨‍🏫</span>
-                        <span className={`font-medium ${selectedRole === "admin" ? "text-blue-600 dark:text-blue-400" : "text-gray-600 dark:text-gray-400"}`}>
-                            Admin/Faculty
-                        </span>
-                    </button>
-                </div>
+                    {/* Password */}
+                    <div>
+                        <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Password
+                        </label>
+                        <input
+                            id="password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Enter your password"
+                            required
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-500"
+                        />
+                    </div>
 
-                <button
-                    onClick={handleSignIn}
-                    disabled={isSyncing}
-                    className="flex w-full items-center justify-center gap-3 rounded-lg bg-white border border-gray-300 px-4 py-3 text-gray-700 shadow-sm hover:bg-gray-50 dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                    <img
-                        src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                        alt="Google logo"
-                        className="h-6 w-6"
-                    />
-                    <span className="text-base font-medium">Sign in with Google</span>
-                </button>
+                    {/* Submit */}
+                    <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-white font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                        {isSubmitting ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                                Signing in...
+                            </span>
+                        ) : (
+                            "Sign In"
+                        )}
+                    </button>
+                </form>
+
+                <p className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                    Don&apos;t have an account?{" "}
+                    <Link href="/signup" className="text-blue-600 hover:text-blue-700 font-medium dark:text-blue-400">
+                        Create one
+                    </Link>
+                </p>
             </div>
         </div>
     );

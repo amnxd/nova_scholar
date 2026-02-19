@@ -9,7 +9,7 @@ load_dotenv()
 def initialize_firebase():
     if not firebase_admin._apps:
         # Check for service account file
-        service_account_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "service-account.json")
+        service_account_path = os.getenv("FIREBASE_SERVICE_ACCOUNT_PATH", "nova-scholar-f10d5-firebase-adminsdk-fbsvc-9ac6252f8f.json")
         
         if os.path.exists(service_account_path):
             cred = credentials.Certificate(service_account_path)
